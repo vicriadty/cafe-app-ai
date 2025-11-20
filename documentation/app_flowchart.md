@@ -1,14 +1,25 @@
 flowchart TD
-  Start[Landing Page]
-  SignUpPage[Sign Up Page]
-  SignInPage[Sign In Page]
-  AuthAPI[Authentication API Endpoint]
-  DashboardPage[Dashboard Page]
-  Start -->|Select Sign Up| SignUpPage
-  Start -->|Select Sign In| SignInPage
-  SignUpPage -->|Submit Credentials| AuthAPI
-  SignInPage -->|Submit Credentials| AuthAPI
-  AuthAPI -->|Success| DashboardPage
-  AuthAPI -->|Error| SignUpPage
-  AuthAPI -->|Error| SignInPage
-  DashboardPage -->|Click Logout| Start
+  Start[Start] --> CheckAuth{User Authenticated?}
+  CheckAuth -->|Yes| DashboardLayout[Dashboard Layout]
+  DashboardLayout --> DashboardPage[Dashboard Main Page]
+  DashboardPage --> ProtectedContent[Protected Content]
+  CheckAuth -->|No| LandingPage[Landing Page]
+  LandingPage --> SignInPage[Sign In Page]
+  LandingPage --> SignUpPage[Sign Up Page]
+  SignInPage --> SubmitSignIn[Submit Sign In Form]
+  SubmitSignIn --> SignInAPICall[Call Sign In API Route]
+  SignInAPICall --> BetterAuthService[Better Auth Service]
+  BetterAuthService --> SignInResponse{Valid Credentials?}
+  SignInResponse -->|Yes| SetSession[Set User Session]
+  SetSession --> RedirectDashboard[Redirect to Dashboard]
+  RedirectDashboard --> DashboardLayout
+  SignInResponse -->|No| SignInError[Display Sign In Error]
+  SignInError --> SignInPage
+  SignUpPage --> SubmitSignUp[Submit Sign Up Form]
+  SubmitSignUp --> SignUpAPICall[Call Sign Up API Route]
+  SignUpAPICall --> BetterAuthService
+  BetterAuthService --> SignUpResponse{Registration Successful?}
+  SignUpResponse -->|Yes| RedirectSignIn[Redirect to Sign In Page]
+  RedirectSignIn --> SignInPage
+  SignUpResponse -->|No| SignUpError[Display Sign Up Error]
+  SignUpError --> SignUpPage
