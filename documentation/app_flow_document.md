@@ -1,41 +1,47 @@
-# App Flow Document
+# cafe-app-ai App Flow Document
 
 ## Onboarding and Sign-In/Sign-Up
 
-When a new visitor arrives at the application’s root URL, they land on a welcome page that offers clear buttons or links to either create an account or sign in. Clicking on the “Sign Up” link takes the visitor to a registration page where they enter their email address and choose a password. Once they submit the form, the application sends a POST request to the authentication API endpoint, which handles password hashing and user creation. If registration succeeds, the new user is automatically signed in and redirected to the dashboard. If there are validation errors, such as a password that is too short or an email already in use, the form reappears with inline messages explaining what must be corrected.
+When a new user visits the cafe-app-ai application, they first arrive at a simple landing page. This page introduces the service and offers clear links to either sign in or sign up. If the user has never created an account, they click the sign-up link and are taken to a registration form. Here they enter their email address, choose a password, and submit the form. The form sends a request to the authentication API, which uses the external Better Auth service to securely create the user account. Once registration succeeds, the user is automatically signed in and redirected to the dashboard.
 
-For returning users, clicking the “Sign In” link from the welcome page or from a persistent header link opens the login form. They input their email and password, and upon submission the app sends a request to the same authentication API with login credentials. A successful login leads directly to the dashboard. If the credentials are invalid, the page reloads with a clear error message prompting the user to try again.
+If an existing user wants to log in, they click the sign-in link on the landing page. They enter their registered email and password into the sign-in form. When they submit, the form calls the same authentication API route. After the service verifies the credentials, the user is redirected to their protected dashboard. At any point, users may click a “Forgot password” link on the sign-in page. This link leads to a page where they enter their email address. The system then sends a password reset link via email. When the user follows that link, they arrive at a reset-password page where they choose a new password. Upon successful reset, they can sign in with the updated credentials.
 
-Signing out is available from within the dashboard via a logout button in the main navigation or header. When clicked, the application clears the user’s session or token, and then navigates back to the welcome page. Currently, there is no built-in password recovery or reset flow in this version, so users who forget their password are prompted to contact support for assistance.
+The application also provides a sign-out option. From within the dashboard layout, a sign-out button appears in the site header. Clicking it calls the sign-out API, clears the user session, and returns the user to the landing page.
 
 ## Main Dashboard or Home Page
 
-After authentication, the user lands on the dashboard, which serves as the main home page. The dashboard is wrapped in a layout that displays a header bar and a sidebar navigation tailored for logged-in users. The header bar typically shows the application’s logo on the left and a Logout link on the right. The sidebar sits on the left side of the screen and may contain links back to the dashboard’s main panel or to future features.
+After a successful sign-in or sign-up, the user lands on the main dashboard. The dashboard layout presents a persistent sidebar on the left, a site header at the top, and a content area in the center. The sidebar shows navigation links for key areas such as Dashboard, Settings, and any custom pages added by the developer. The site header displays the application title, a theme toggle switch, and the user’s avatar or sign-out button.
 
-The central area of the dashboard page displays data pulled from a static JSON file. This content might appear in cards or tables to give users a quick overview of information. All styling for this section comes from a dedicated theme stylesheet to keep the look consistent. Users can click items or links here, but those actions are placeholders for future dynamic data features.
-
-From this dashboard view, users may revisit the welcome page or any other main area by selecting navigation items in the sidebar or header. The layout ensures that the logout link remains accessible at all times, and that the user cannot leave the authenticated area without signing out manually or having their session expire.
+In the main content area, the default dashboard page greets the user and shows summary cards, tables, and charts that display relevant data. Each card or chart is interactive, allowing the user to drill down into details. From this view, the user can move to other parts of the app by clicking items in the sidebar or links within the content.
 
 ## Detailed Feature Flows and Page Transitions
 
-When a visitor lands on the root page, JavaScript on the client reads the route and displays either the welcome interface or automatically redirects them to the dashboard if a valid session exists. For new user registration, the user clicks the Sign Up link and is taken to the sign-up page. The sign-up form collects email and password fields, and on submission it triggers a client-side POST to the API route. Once the API responds with success, the client redirects the user to the dashboard page.
+### Authentication Flow
 
-Returning users choose the Sign In link and arrive at the sign-in page, which offers the same fields as the sign-up page but is wired to authenticate rather than create a new account. On form submit, the user sees a loading indication until the API confirms valid credentials. If successful, the client pushes the dashboard route and loads the dashboard layout and content.
+When the user interacts with any authentication form, the form component captures the input and submits it to the Next.js API route under `/api/auth/[…all]/route.ts`. This API route communicates with Better Auth to handle sign-up, sign-in, sign-out, and password reset. After the service responds, the API route either redirects the user to the dashboard on success or returns error information for display on the same page.
 
-All authenticated pages reside under the `/dashboard` path. When the user attempts to navigate directly to `/dashboard` without a valid session, server-side redirection logic intercepts the request and sends the user back to the sign-in page. This ensures that protected content never shows to unauthorized visitors.
+### Dashboard Navigation and Data Viewing
 
-Signing out happens entirely on the client side by calling an API or clearing a cookie, then navigating back to the welcome page. The client code listens for the logout action, invalidates the current session, and then reloads or reroutes the application state to the landing interface.
+Once on the dashboard page, the user sees a series of UI components built with the shadcn/ui library. If they click on a summary card, they navigate to a dedicated detail page for that data set. The transition is handled by Next.js client-side routing, ensuring a smooth user experience without full page reloads. The sidebar remains visible at all times, so the user can switch to other data modules or the settings area at any moment.
+
+### Theming and UI Customization
+
+In the site header, the user finds a theme toggle switch. When they click it, the application updates a CSS variable in real time to switch between light and dark mode. The current theme preference is stored locally, so when the user returns later, the app automatically applies their last chosen theme. The implementation relies on Tailwind CSS classes combined with custom CSS variable definitions.
 
 ## Settings and Account Management
 
-At present, users cannot change profile information, update their email, or configure notifications from within the interface. The only account management available is the ability to sign out from any dashboard view. In future iterations, a dedicated settings page could be added to let users update personal details or adjust preferences, but in this version, those capabilities are not provided. After signing out, users always return to the welcome page and must sign in again to regain access to the dashboard.
+The Settings page is accessible from the sidebar navigation. On this page, the user finds a profile form where they can update their name, email address, and password. When they submit changes, the form calls an API route that updates the user record in the PostgreSQL database via Drizzle ORM. After a successful update, the form shows a confirmation message and the updated information appears immediately.
+
+In the same settings area, the user can manage notification preferences if those are enabled. They can toggle email notifications on or off and save their choices. All updates happen through the API and are persisted in the user’s settings table.
+
+When the user is finished in settings, they can click the sidebar link labeled Dashboard or any other section to return to the main flow.
 
 ## Error States and Alternate Paths
 
-If a user types an incorrect email or password on the sign-in page, the authentication API responds with an error status and a message. The form then displays an inline alert near the input fields explaining the issue, such as “Invalid email or password,” allowing the user to correct and resubmit. During sign up, validation errors like a missing field or weak password appear immediately under the relevant input.
+If the user enters invalid credentials on the sign-in or sign-up form, the API returns an error message. The form displays this message inline below the relevant input fields, prompting the user to correct the mistake. When network connectivity is lost, the application shows a full-page error banner with a retry button. Clicking retry reattempts the failed request.
 
-Network failures trigger a generic error notification at the top of the form, informing the user that the request could not be completed and advising them to check their connection. If the dashboard content fails to load due to a broken or missing static data file, a fallback message appears in the main panel stating that data could not be loaded and suggesting a page refresh. Trying to access a protected route without a session sends the user to the sign-in page automatically, making it clear that authentication is required.
+If a user tries to access a protected route without being authenticated, the middleware automatically redirects them to the sign-in page. After they sign in successfully, they are sent back to the page they originally requested. In case the password reset link is invalid or expired, the reset-password page displays an error and a link to request a new reset email.
 
 ## Conclusion and Overall App Journey
 
-A typical user journey starts with visiting the application’s root URL, signing up with an email and password, then being welcomed in the dashboard area that displays sample data. Returning users go directly through the sign-in page to the dashboard. Throughout each step, clear messages guide the user in case of errors or invalid input. The layout remains consistent, with a header and navigation ensuring that users always know where they are and can sign out at any time. This flow lays the foundation for adding dynamic data, user profile management, and richer features in future releases.
+A typical user journey begins at the landing page, where they sign up with an email and password. They are immediately taken to a protected dashboard that features summary cards, tables, and charts. From the dashboard, they navigate into deeper data views, switch between themes, and manage their account details in the settings page. If they ever forget their password, they can request a reset link, update their password, and log back in. Throughout their experience, the app maintains smooth transitions using Next.js routing and delivers clear feedback on both successes and errors. This flow ensures that users can move from first landing to daily usage without confusion or interruption.

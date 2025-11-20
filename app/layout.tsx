@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Parkinsans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
+import { TRPCProvider } from "@/lib/trpc/provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,9 +20,9 @@ const parkinsans = Parkinsans({
 });
 
 export const metadata: Metadata = {
-  title: "Codeguide Starter Fullstack",
+  title: "Cafe App - Restaurant Ordering System",
   description:
-    "A modern Next.js starter with TypeScript, TailwindCSS, shadcn/ui, Better Auth, and Drizzle ORM",
+    "A modern restaurant and cafe ordering system with AI-powered virtual waitress, menu management, and order processing",
 };
 
 export default function RootLayout({
@@ -40,7 +41,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TRPCProvider>
+            {children}
+          </TRPCProvider>
         </ThemeProvider>
       </body>
     </html>
